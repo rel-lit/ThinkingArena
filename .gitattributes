@@ -1,0 +1,8 @@
+# 对所有文本文件自动处理换行符
+* text=auto
+
+# 明确指定 Markdown 文件使用 LF（跨平台一致性）
+*.md text eol=lf
+
+# 或者如果你希望 Windows 项目统一用 CRLF：
+# * text eol=crlf
