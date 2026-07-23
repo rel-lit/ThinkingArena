@@ -4,7 +4,7 @@
 
 ## 1. 设计参考书：两份半
 
-不 fork、不复制任何代码（含片段）；价值通过精读转移为知识。
+核心架构是**知识级嫁接**的产物：不 fork、不复制任何代码（含片段），但每个关键机制都移植自已验证的实现，价值通过精读转移为知识。嫁接对象如下——
 
 - **pi**（github.com/earendil-works/pi，MIT，TypeScript，53k+ star）——第一参考书，管**服务层 / 元组件层 / 干预机制**。"薄核心 + 事件即全部 + 分层接缝"哲学在单 Agent 编码助手域的成熟实现：统一 LLM 调用层 + 约 790 行 agent loop + 会话 JSONL 树持久化 + AgentTool 规范化工具契约 + steering/follow-up 干预队列。不改造、不依赖（域错位：无多 Agent/黑板/DAG 编排；其 pi-ai 调用层与 AI SDK 职责重复）。五个吸收点（均带源码位置）：
   ① AgentTool 契约（参数 schema 校验前置、before 钩子可拦截、after 钩子可改写、错误编码进结果、length 截断拒执行整批）→ 元组件层形态模板；
