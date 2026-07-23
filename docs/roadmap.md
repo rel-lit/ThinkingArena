@@ -5,7 +5,8 @@
 ## Phase 0 — 精读参考书 + 契约初稿（2~3 天）
 
 - 精读 Masquerade 源码（engine / orchestrator / agent / script），产出 `docs/masquerade-walkthrough.md`：回合怎么切、Script 时间轴怎么记、并发阶段怎么调度、TTS/Remotion 数据桥怎么接。细到可直接当实现规格书。
-- 四份契约初稿落 `schema/` 目录（Pydantic + JSON Schema 导出）：
+- 精读 pi 的 packages/agent（agent-loop / types / jsonl-storage / agent-harness 文档），吸收 AgentTool 契约、JSONL 树落盘、两段式上下文投影、turn 快照/保存点、steering/follow-up 队列（依据见 research.md 第 1 节），产出并入导读笔记的"服务层与元组件层"章节。
+- 四份契约初稿落 `schema/` 目录（Zod + JSON Schema 导出）：
   - **Script 事件契约 v0.1**：发言/独白/骰点/导演干预/服务调用/缓存失效/成本（含原始 usage）；
   - **identity_card_v1**（设计已定稿，见 identity-card.md）；
   - **流程图配置 v0.1**：DAG 组件节点 + 控制边（if/while/并行）+ 导演节点；
@@ -15,7 +16,7 @@
 ## Phase 1 — 薄核心 MVP（1~2 周）
 
 - 按组件模型自研最小核心：配置化 DAG 执行器 + 元组件层 + 服务层（黑板/记忆/上下文，持久化）+ LiteLLM 接入 + 身份牌层（L0–L9 先实现静态区与动态尾区）+ 首批游戏组件，**用《谁是卧底》验证**（图配置 + 组件组装，不写引擎子类）。
-- 规模纪律：核心 ~2500 行内；依赖仅 LiteLLM + Pydantic。
+- 规模纪律：核心 ~2500 行内；技术栈 TypeScript（Node LTS），依赖仅 LiteLLM（Proxy sidecar）+ Zod。
 - 验证场：不同玩家绑不同服务商（DeepSeek / Claude / Kimi / 豆包）同局竞技 + 双轨成本台账。
 - 接入验收清单落地为 dev 工具（cost 非零 / cached_tokens / 工具调用往返 / json_object，不过不进局）。
 - **产出**：多服务商对局 Script + 成本报告。—— 本身即可作为第一条 B 站视频题材。
