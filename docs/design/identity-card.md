@@ -1,6 +1,6 @@
 # 身份牌（Identity Card）模块：调研与设计
 
-> 专项设计文档。领域定位见 core-loop.md（身份牌属服务层的提示词管理范畴），缓存与事件契约见 architecture.md D4/D1。
+> 专项设计文档。领域定位见 core-loop.md（身份牌属服务层的提示词管理范畴），缓存与事件机制见 architecture.md（Prompt 分层与缓存 / 事件即真相）。
 > 第一原则：身份牌与 LLM 服务商配置完全解耦。
 
 ---
@@ -213,13 +213,13 @@ extensions: {}                 # 任意私有扩展；导入器不得销毁未�
   3. whisper 按定义只对目标 Agent 可见，放在其私有尾区天然满足隔离。
   whisper 事件写入 Script（`director_whisper`），与注入文本 hash 一起落盘。
 - **L4 世界书采用 ST 机制子集**：关键词触发 + 常亮条目 + scan depth + token 预算 + insertion order 足够 MVP；递归扫描、概率、Inclusion Group 后期再加。注意 ST 默认把触发条目插在角色定义前后（静态区），但**本项目应把触发条目整体下移到自己的 L4 段**，否则触发与否会造成前缀逐字漂移、缓存命中率随机化——这是对 ST 设计的有意偏离，原因是 ST 单用户不在乎缓存，本项目在乎。
-- **edit_world 与 cache_invalidation 对齐**：导演 `edit_world` 改 L2/L4 → 记 `cache_invalidation` 事件（架构文档 D2/D4 已定义），成本归因链路闭合。
+- **edit_world 与 cache_invalidation 对齐**：导演 `edit_world` 改 L2/L4 → 记 `cache_invalidation` 事件（见 architecture.md 导演门与缓存机制），成本归因链路闭合。
 - **渲染确定性纪律**（防 footgun，见调研 1.3）：L0–L5 由一个纯函数渲染器产出，字段顺序固定、无时间戳/UUID/回合计数、YAML 序列化器固定（key 排序、缩进固定）；渲染器输出静态前缀的 SHA256 写入每回合事件，用于验证"逐字稳定"是否被破坏。
 - **断点预算**：Anthropic 仅 4 个断点，方案用 2 个静态断点（L2 末、L3 末），余量留给 L7 滚动历史断点；OpenAI/DeepSeek 自动缓存无需标记，只需保证结构。
 
 ## 2.3 文件格式
 
-- **YAML，一卡一文件**，存放于 Scenario Bundle 的 `identity_cards/` 子目录，随 Bundle 进 git（与架构文档 D3 一致）。选 YAML 而非 JSON：人写人设需要多行文本与注释，且项目现有配置已是 YAML。
+- **YAML，一卡一文件**，存放于 Scenario Bundle 的 `identity_cards/` 子目录，随 Bundle 进 git（见 architecture.md 契约与 Bundle）。选 YAML 而非 JSON：人写人设需要多行文本与注释，且项目现有配置已是 YAML。
 - **Tavern v2 导入兼容**：提供一次性转换器 `tavern_import`（输入 PNG/JSON → 输出身份牌 YAML）：
 
 | Tavern v2 字段 | 身份牌字段 | 备注 |

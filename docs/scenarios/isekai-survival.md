@@ -26,7 +26,7 @@ MVP 之后第一个扩展就是**锦标赛模式**（多 Build 并行跑同一�
 
 - **Protagonist Agent**：主角。Agent 服务实例 + Build 身份卡（`identity_card_v1, kind=build`，见 design/identity-card.md）——本/硕/博院校专业 + 课题 + 派生技能标签与性格。
 - **裁判**：不是单个角色，而是**组件组合**——Narrator 叙事组件（调 Agent 服务写情境与后果）+ Archivist 状态权威服务（维护结构化状态表、校验叙事不违背状态，防吃书）+ 骰子组件。
-- **Director（你）**：通过导演组件 inject / whisper / edit_world 随时干预（architecture.md D2）。
+- **Director（你）**：通过导演门 inject / whisper / edit_world 随时干预（见 architecture.md 导演门机制）。
 
 ### 状态表（Archivist 权威）
 
@@ -45,7 +45,7 @@ timeline: []         # 事件史
 
 ### 流程结构（图编排）
 
-一回合 = 流程图节点序列，每个节点是一个组件（组件内部硬编码逻辑，组件间由编排层配置化连接，支持条件与循环——见 architecture.md D7）：
+一回合 = 流程图节点序列，每个节点是一个组件（组件内部硬编码逻辑，组件间由编排层配置化连接，支持条件与循环——见 architecture.md DAG 执行器）：
 
 1. **情境呈现**：Narrator 组件基于世界设定 + 状态表生成当前局面（含一个明确的压力源）。
 2. **主角决策**：调 Protagonist Agent 服务，输出内心独白 + 行动声明（可声明使用技能/物资）。
