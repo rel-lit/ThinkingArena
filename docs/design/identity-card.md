@@ -1,6 +1,7 @@
 # 身份牌（Identity Card）模块：调研与设计
 
-> 2026-07-23 v1：解决"多 LLM 接入层"与"身份牌提示词层"未显式区分的问题。身份牌与 LLM 服务商配置完全解耦是本模块的第一原则。
+> 专项设计文档。领域定位见 core-loop.md（身份牌属服务层的提示词管理范畴），缓存与事件契约见 architecture.md D4/D1。
+> 第一原则：身份牌与 LLM 服务商配置完全解耦。
 
 ---
 
@@ -131,10 +132,9 @@ Context % / Token Budget 控制世界书总占用；预算耗尽即停止插入�
 
 1. **身份牌与 LLM 服务商配置完全解耦**（第一原则）：卡内零模型信息。绑定关系发生在游戏 YAML：`player.identity_ref` + `player.llm.model` 两个独立字段。
 2. **共享层在前、个体层在后**：同一服务商下的多个 Agent，其 prompt 的 L0–L2（输出契约/游戏规则/世界设定）若渲染逐字一致，可跨 Agent 复用服务商前缀缓存；身份牌渲染块（L3）是每 Agent 前缀的分叉点。这是把"静态置前"惯例推广到多 Agent 场景的关键排布。
+3. **whisper 走 ST 的 @D 深度注入范式**：私有、近尾部、绝不进静态前缀——同时满足缓存稳定与注意力显著性（调研证实历史之后的指令权重更高）。
 
-4. **whisper 走 ST 的 @D 深度注入范式**：私有、近尾部、绝不进静态前缀——同时满足缓存稳定与注意力显著性（调研证实历史之后的指令权重更高）。
-
-## 2.1 身份牌 Schema 草案（`identity_card_v1`）
+## 2.1 身份牌 Schema（`identity_card_v1`）
 
 ```yaml
 spec: identity_card_v1
@@ -146,7 +146,7 @@ meta:                          # 永不进 prompt（creator_notes 惯例）
   creator: "forgo"
   version: "1.0"
   tags: [odyssey, survival]
-  notes: "均衡生存流 Build；配 Referee 引擎使用"
+  notes: "均衡生存流 Build；配裁判组件组合使用"
   source:                      # 导入溯源（Tavern 卡导入时填充）
     format: null               # "chara_card_v2" | null
     imported_from: null        # 文件名/URL
@@ -187,7 +187,7 @@ extensions: {}                 # 任意私有扩展；导入器不得销毁未�
 ```
 ┌─ 静态前缀区（跨回合逐字稳定；同服务商 Agent 间共享）─────────────────
 │ L0 输出契约        响应格式/结构化输出协议/全局禁令        缓存:全局静态 ★★★
-│ L1 游戏规则        GameEngine 契约、回合协议、骰点档级      缓存:每局静态 ★★★
+│ L1 游戏规则        流程图契约、节点协议、骰点档级          缓存:每局静态 ★★★
 │ L2 世界设定        场景 YAML 静态部 + 世界书常亮条目        缓存:每局静态 ★★☆
 │    ── Anthropic 断点①（tools/system 边界）──
 ├─ 半静态区（单 Agent 内稳定；同服务商跨 Agent 在此分叉）─────────────
@@ -217,7 +217,7 @@ extensions: {}                 # 任意私有扩展；导入器不得销毁未�
 - **渲染确定性纪律**（防 footgun，见调研 1.3）：L0–L5 由一个纯函数渲染器产出，字段顺序固定、无时间戳/UUID/回合计数、YAML 序列化器固定（key 排序、缩进固定）；渲染器输出静态前缀的 SHA256 写入每回合事件，用于验证"逐字稳定"是否被破坏。
 - **断点预算**：Anthropic 仅 4 个断点，方案用 2 个静态断点（L2 末、L3 末），余量留给 L7 滚动历史断点；OpenAI/DeepSeek 自动缓存无需标记，只需保证结构。
 
-## 2.3 文件格式建议
+## 2.3 文件格式
 
 - **YAML，一卡一文件**，存放于 Scenario Bundle 的 `identity_cards/` 子目录，随 Bundle 进 git（与架构文档 D3 一致）。选 YAML 而非 JSON：人写人设需要多行文本与注释，且项目现有配置已是 YAML。
 - **Tavern v2 导入兼容**：提供一次性转换器 `tavern_import`（输入 PNG/JSON → 输出身份牌 YAML）：
@@ -237,8 +237,8 @@ extensions: {}                 # 任意私有扩展；导入器不得销毁未�
   不承诺 PNG 导出（MVP 不需要），只承诺导入。
 - **世界书文件**：独立 `lorebook.yaml`（entries: keys / secondary_keys / constant / position / order / content），身份牌以 `lorebook_ref` 引用；Bundle 级世界书与卡级世界书合并策略照搬 ST 的 Sorted Evenly。
 
-## 2.4 待决策点
+## 2.4 已定决策（曾有的取舍点，结论固化）
 
-1. `overrides.system_prompt_suffix`（追加）vs Tavern 的整体替换语义——追加保缓存、替换保作者控制力，目前选追加。
-2. L4 触发条目下移偏离 ST 惯例，对"条目贴角色定义更有效"的经验法则有损耗，需要实测戏剧质量。
-3. 身份牌私有字段（alignment/secret_goals）是否进 L3 静态块：进则缓存友好但换身份即失效；社交演绎类游戏身份一局不变，建议进。
+1. **`system_prompt_suffix` 采用追加语义**（vs Tavern 的整体替换）：追加保共享前缀缓存，牺牲部分卡作者控制力；整体替换在多 Agent 共享 L1 的架构下不可行。
+2. **L4 触发条目下移**（偏离 ST 惯例）：缓存确定性优先于"条目贴角色定义更有效"的经验法则；戏剧质量损耗待实测验证，若显著再评估折中（如常亮条目留在 L2、仅触发条目下移）。
+3. **私有字段进 L3 静态块**：alignment/secret_goals 一局不变，进 L3 缓存友好；换身份即换卡，不存在局内失效问题。

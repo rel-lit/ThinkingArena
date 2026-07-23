@@ -8,7 +8,7 @@
 - 精读 pi 的 packages/agent（agent-loop / types / jsonl-storage / agent-harness 文档），吸收 AgentTool 契约、JSONL 树落盘、两段式上下文投影、turn 快照/保存点、steering/follow-up 队列（依据见 research.md 第 1 节），产出并入导读笔记的"服务层与元组件层"章节。
 - 四份契约初稿落 `schema/` 目录（Zod + JSON Schema 导出）：
   - **Script 事件契约 v0.1**：发言/独白/骰点/导演干预/服务调用/缓存失效/成本（含原始 usage）；
-  - **identity_card_v1**（设计已定稿，见 identity-card.md）；
+  - **identity_card_v1**（设计已定稿，见 design/identity-card.md）；
   - **流程图配置 v0.1**：DAG 组件节点 + 控制边（if/while/并行）+ 导演节点；
   - **元组件接口规范 v0.1**：统一调用面签名 + 事件发射校验入口，按可对外暴露形态设计。
 - **产出**：导读笔记 + `schema/` 目录（契约即代码）。

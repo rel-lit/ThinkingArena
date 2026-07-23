@@ -15,21 +15,21 @@
 - 回合拓扑静态、导演注入在节点边界、可复现性由事件重放承担——编排框架（LangGraph 等）的核心价值区（动态图、任意点 interrupt、checkpoint 持久化）全部用不上，反而引入双真相源与已知坑。
 - 方法论佐证：12-Factor Agents 的 Own your control flow。图库（graphlib 等）只提供静态拓扑排序，Temporal/Inngest 类持久化引擎要引入重基础设施——均与本模型不符，自研正确。
 
-**n8n 引擎调研结论**（实现视角，2026-07）——节点-图分离的成熟参照物，仅参照不引入：
+**n8n 引擎调研结论**（实现视角）——节点-图分离的成熟参照物，仅参照不引入：
 - 节点 = **描述 + 行为两元**（参数 schema + execute），带 version 字段；边 =（源节点，源端口）→（目标节点，目标端口）。
 - 执行 = **动态就绪调度**（执行栈 + 多输入等待表），无需静态拓扑排序；**回边即循环**；分支语义 = 往哪个输出端口放数据，引擎本身不理解 if。
 - 借鉴：组件 description/behavior 分离 + version 字段；边以节点 id 为键、端口命名；join 显式等待语义；节点执行快照（对应条件判别值快照落盘）；凭证"配置存引用、运行时解析、自带 test 声明"。
 - 排除：items/pairedItem 数据模型（ETL 遗产）、**可执行表达式引擎**（沙箱 CVE 连环，条件走声明式比较算子 DSL）、执行级挂起恢复（导演门是分支级阻塞）、queue mode、UI 耦合参数系统、画布位置参与执行语义。
 
-## 3. LLM 接入：Vercel AI SDK + 自研薄路由（2026-07 重评后替换 LiteLLM）
+## 3. LLM 接入：Vercel AI SDK + 自研薄路由
 
 **技术栈 TypeScript（Node LTS）**——唯一开发者 C# 母语，TS 为最短迁移路径（同设计师、类型系统与 async/await 神似）；Agent 工具层新项目密度向 TS 倾斜；与参考书（pi/n8n）及下游（Remotion）同栈。
 
-**候选审查**（2026-07 实测）：litellmts-core 不存在；Amux 太早期（周下载 12、仅 3 家适配器）；NeuroLink 无 Moonshot/豆包且 50 依赖的重平台；multi-llm-ts 无 Moonshot/豆包；OpenRouter 无国内豆包端点且为托管形态；Portkey 无火山方舟且 2.0 改版动荡中；pi-ai 缓存/成本开箱最强但 TypeBox 与 Zod 纪律摩擦、结构化输出路径不明——**列为第一退路**。
+**候选审查**（实测）：litellmts-core 不存在；Amux 太早期（周下载 12、仅 3 家适配器）；NeuroLink 无 Moonshot/豆包且 50 依赖的重平台；multi-llm-ts 无 Moonshot/豆包；OpenRouter 无国内豆包端点且为托管形态；Portkey 无火山方舟且 2.0 改版动荡中；LiteLLM 为 Python 生态、TS 侧无等效移植；pi-ai 缓存/成本开箱最强但 TypeBox 与 Zod 纪律摩擦、结构化输出路径不明——**列为第一退路**。
 
 **选定 Vercel AI SDK**（`ai` + `@ai-sdk/deepseek` + `@ai-sdk/moonshotai`(或 openai-compatible) + `@ai-sdk/anthropic` + `@ai-sdk/openai-compatible` 直连火山方舟豆包；18.3M 周下载、Apache-2.0、3 依赖）：
 - 五家服务商全覆盖且**全部直连**——透传路由类 bug（缓存计费归一化错误）整类消失。
-- 缓存：Anthropic 消息级 `providerOptions.anthropic.cacheControl` 显式断点；cache read/write tokens 入标准 usage；DeepSeek/Kimi 原始字段经 metadataExtractor 抓原始响应体——**原始 usage 轨拿得比 LiteLLM 更全**。
+- 缓存：Anthropic 消息级 `providerOptions.anthropic.cacheControl` 显式断点；cache read/write tokens 入标准 usage；DeepSeek/Kimi 原始字段经 metadataExtractor 抓原始响应体——**原始 usage 轨完整保留，成本对账不缺字段**。
 - 结构化输出：`generateObject` 原生吃 Zod schema，与项目 schema 纪律零摩擦；D5 降级路径（json_object + Zod 校验重试）原样保留。
 - 无内置 Router/价格表 → **自研薄路由**（按模型名路由 + 同能力级 fallback 链 + 指数退避 + 熔断，约百行，行为完全可控）+ **自维护 YAML 价格表**（本就是双轨台账预留的覆盖轨，扶正而非新增）。
 
@@ -39,7 +39,7 @@
 - **成本双轨**：自维护价格表计算值 + 原始 usage 重算值同时落 Script；价格表即 `model_info` 覆盖轨。
 - **换层前置动作**：五家按 D5 验收清单重跑冒烟（cost 非零 / cached_tokens / 工具往返 / json_object）。
 
-## 4. 身份与 prompt：身份牌层（设计详见 identity-card.md）
+## 4. 身份与 prompt：身份牌层（设计详见 design/identity-card.md）
 
 - **SillyTavern** 体系是该问题域最成熟参照：Tavern v2 角色卡规范、World Info 世界书、Prompt Manager 分层组装。
 - 业界缓存实践一致：静态内容置前、动态置尾、边界打断点；防 footgun（工具序漂移、时间戳/UUID 泄漏进前缀）。
@@ -55,7 +55,7 @@
 - 视频脚本创作、Remotion 工程搭建与迭代、B 站发布：交给 Kimi 桌面端 / OpenCode 等 Agent 工具，经事件契约与分镜 Schema 衔接，校验器兜底。
 - 参照：**MoneyPrinterTurbo**（全链路工程参照）、**NarratoAI**（IndexTTS2 语音克隆备选）、**MoneyPrinterPlus**（B 站自动发布模块参照）。
 
-## 7. TS 工程栈明细（2026-07 调研，原生内置优先）
+## 7. TS 工程栈明细（原生内置优先）
 
 | 模块 | 选型 | 一句理由 |
 |---|---|---|

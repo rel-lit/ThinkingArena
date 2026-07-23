@@ -1,6 +1,6 @@
 # 总体架构
 
-> 上位文档：core-loop.md（领域模型）。选型依据：research.md。身份牌设计：identity-card.md。
+> 上位文档：core-loop.md（领域模型）。选型依据：research.md。身份牌设计：design/identity-card.md。
 
 ## 1. 模块视图
 
@@ -97,9 +97,9 @@
 
 - 每个角色在游戏 YAML 声明 `llm.model`（provider/模型标识）+ `identity_ref`（身份卡引用）——两层解耦是硬约束，身份卡 schema 校验器拒绝卡内出现模型字段。LLM 绑定声明自带验收测试（可用性冒烟），类比 n8n 凭证的 test 声明。
 - 缓存硬约束：
-  1. **Prompt 分层**：按 identity-card.md 的 L0–L9 组装；L0–L3 静态前缀逐字稳定（共享层在前、身份层在后，同服务商跨 Agent 复用前缀缓存）；渲染器为纯函数，输出 SHA256 落 Script 验证逐字稳定；改写静态前缀记 `cache_invalidation` 事件。
+  1. **Prompt 分层**：按 design/identity-card.md 的 L0–L9 组装；L0–L3 静态前缀逐字稳定（共享层在前、身份层在后，同服务商跨 Agent 复用前缀缓存）；渲染器为纯函数，输出 SHA256 落 Script 验证逐字稳定；改写静态前缀记 `cache_invalidation` 事件。
   2. **记忆滚动摘要**：长记忆压缩为稳定摘要段保持在静态区（L5），由记忆系统负责；压缩检查点自包含，重建上下文不必回放全量历史。
-  3. **服务商原生缓存**：DeepSeek/Kimi/OpenAI 自动缓存零代码收益；Anthropic 必须显式断点（AI SDK 消息级 `providerOptions.anthropic.cacheControl`），断点规划见 identity-card.md；豆包短局只用隐式缓存。批量阶段同服务商并发最大化前缀复用。
+  3. **服务商原生缓存**：DeepSeek/Kimi/OpenAI 自动缓存零代码收益；Anthropic 必须显式断点（AI SDK 消息级 `providerOptions.anthropic.cacheControl`），断点规划见 design/identity-card.md；豆包短局只用隐式缓存。批量阶段同服务商并发最大化前缀复用。
   4. **成本台账（双轨）**：自维护 YAML 价格表计算值 + 原始 usage（prompt/completion/cached tokens）重算值同时落 Script，互相对账。
 - fallback 链只做同能力等级降级，由自研薄路由执行（按模型名路由 + 指数退避 + 熔断计数）；跨服务商 fallback 前过冒烟测试。
 
