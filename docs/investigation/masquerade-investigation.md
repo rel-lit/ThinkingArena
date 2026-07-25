@@ -670,7 +670,7 @@ Masquerade 作为 ThinkingArena 的**第二参考书**，其已验证的设计�
 | 2 | TCAS 并发批处理 | `orchestrator/runner.py` `_process_batch` | `orchestrator/` DAG 执行器并行分支 |
 | 3 | Script 时间轴 + 记忆快照 | `script/schema.py` `MemorySnapshot` | `schema/` 事件契约 |
 | 4 | 三级信息分离 | `engine/base.py` `get_public/private/role_info` | `services/agent` 上下文投影 |
-| 5 | 策略注入契约 | `agent/strategy.py` `AgentStrategy` | `design/identity-card.md` L0-L9 |
+| 5 | 策略注入契约 | `agent/strategy.py` `AgentStrategy` | `design/overview.md` §5.3 L0–L9 分层 |
 | 6 | EventBus 发布订阅 | `orchestrator/event_bus.py` | `meta/` 事件发射元组件 |
 | 7 | 共享图推理架构 | `reasoning/shared_graph.py` | `services/blackboard` + `reasoning/` |
 

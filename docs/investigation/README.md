@@ -50,7 +50,7 @@
 | 2 | TCAS 并发批处理（Think-Concurrent-Apply-Serial） | `orchestrator/runner.py` | `orchestrator/` DAG 执行器并行分支 |
 | 3 | Script 时间轴 + 记忆快照 | `script/schema.py` | `schema/` 事件契约 |
 | 4 | 三级信息分离（Public / Private / God） | `engine/base.py` | `services/agent` 上下文投影 |
-| 5 | 策略注入契约（AgentStrategy） | `agent/strategy.py` | [../design/identity-card.md](../design/identity-card.md) L0-L9 |
+| 5 | 策略注入契约（AgentStrategy） | `agent/strategy.py` | [../design/overview.md](../design/overview.md) §5.3 L0–L9 分层 |
 | 6 | EventBus 发布订阅 | `orchestrator/event_bus.py` | `meta/` 事件发射元组件 |
 | 7 | 共享图推理架构（SharedGraph + PrivateOverlay） | `reasoning/shared_graph.py` | `services/blackboard` + `reasoning/` |
 | 8 | Pydantic 契约层（Schema-First） | `script/schema.py` + `frontend/src/types/game-script.ts` | `schema/` 四份契约 |

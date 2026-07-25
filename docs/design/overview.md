@@ -478,7 +478,7 @@ interface DirectorGate {
 
 #### 选择
 
-- L0–L9 prompt 分层，权威定义见 design/identity-card.md
+- L0–L9 prompt 分层，当前定义见本节（原 design/identity-card.md 已刻意移除——内容过于具体易带偏整体设计，字段级契约留待 Schema 阶段定义）
 - 自研 identity_card_v1（与 LLM 配置零耦合）
 - 兼容 Tavern v2 卡导入
 - 成本双轨台账
@@ -1067,7 +1067,7 @@ interface ServiceCall {
 | 2 | TCAS 并发批处理 | `orchestrator/runner.py` | `orchestrator/` DAG 执行器并行分支 |
 | 3 | Script 时间轴 + 记忆快照 | `script/schema.py` | `schema/` 事件契约 |
 | 4 | 三级信息分离 | `engine/base.py` | `services/agent` 上下文投影 |
-| 5 | 策略注入契约 | `agent/strategy.py` | `design/identity-card.md` L0-L9 |
+| 5 | 策略注入契约 | `agent/strategy.py` | §5.3 L0–L9 分层 |
 | 6 | EventBus 发布订阅 | `orchestrator/event_bus.py` | `meta/` 事件发射元组件 |
 | 7 | 共享图推理架构 | `reasoning/shared_graph.py` | `services/blackboard` + `reasoning/` |
 | 8 | Pydantic 契约层 | `script/schema.py` + `frontend/src/types/game-script.ts` | `schema/` 四份契约 |

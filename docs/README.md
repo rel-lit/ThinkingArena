@@ -16,13 +16,13 @@
 
 | 目录 | 内容 |
 |---|---|
-| [design/](design/) | 专项设计：[identity-card.md](design/identity-card.md)——身份牌模块（Tavern v2 / World Info / 缓存实践调研 + identity_card_v1 Schema + L0–L9 prompt 分层） |
+| [design/](design/) | 设计文档：[overview.md](design/overview.md)——设计与架构综合参考（含 L0–L9 prompt 分层当前定义）；[runtime-architecture.md](design/runtime-architecture.md)——运转架构权威定义（数据流/时序/状态机/接口/错误矩阵） |
 | [scenarios/](scenarios/) | 场景设计：[isekai-survival.md](scenarios/isekai-survival.md)——异世界生存推演 Odyssey（MVP 裁剪、流程结构、Build 卡、导演干预点） |
 
 ## 引用关系
 
 - 概念只定义一次：四层模型定义于 core-loop.md，实现细节定义于 architecture.md，其余文档只引用不重述。
-- design/identity-card.md 是架构"Prompt 分层与缓存"与"导演门"两个机制在 prompt 层的展开；L0–L9 分层图是缓存断点与 whisper 注入位置的权威定义。
+- L0–L9 分层图是缓存断点与 whisper 注入位置的当前定义，见 design/overview.md §5.3（原 design/identity-card.md 已刻意移除——过于具体的细节易带偏整体设计）。
 - scenarios/ 用领域模型语言书写（组件组合、流程图节点、Agent 服务、黑板），不引入模型外的概念。
 - roadmap.md 各 Phase 交付物回链上述契约与设计文档。
 

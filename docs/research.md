@@ -14,7 +14,7 @@
   ⑤ steering/follow-up 双队列 → 导演门两档干预原型。
 - **Masquerade**（github.com/GOODDAYDAY/Masquerade，Apache 2.0）——管**游戏引擎与 Script 记录**。已实现"模拟 → Script JSON → edge-tts → React 回放 → Remotion 出片"全链路；engine（纯规则 LLM 无关）/ orchestrator（回合驱动 + 并发批阶段）/ script（时间轴 + 内心独白 + 记忆快照）分工是已验证的设计。但 0 star、未经社区验证，且用户要求完全把控——只读不复制，下游前端不继承，交给成熟 Agent 工具按契约重建。
 - **n8n**——半份，管**编排引擎语义**。节点 = 描述 + 行为两元（参数 schema + execute，带 version）；边 =（源节点，源端口）→（目标节点，目标端口）；执行 = 动态就绪调度（执行栈 + 多输入等待表），无需静态拓扑排序；回边即循环；分支语义 = 往哪个输出端口放数据，引擎不理解 if。借鉴：两元结构、端口命名、join 显式等待、节点执行快照（→ 条件判别值快照落盘）、凭证 test 声明（→ LLM 绑定冒烟）。排除：items/pairedItem 数据模型（ETL 遗产）、可执行表达式引擎（沙箱 CVE 连环，条件走声明式比较算子 DSL）、执行级挂起恢复、queue mode、UI 耦合参数系统、画布位置参与执行语义。
-- 另有两个专项参照：**SillyTavern**（角色卡/世界书/prompt 分层，见 design/identity-card.md）；**ChatRPG v2**（arXiv:2502.19519，Narrator + Archivist 裁判范式——叙事与状态归档分离，结构化状态为唯一权威防吃书）。
+- 另有两个专项参照：**SillyTavern**（角色卡/世界书/prompt 分层，要点见 design/overview.md §5.3）；**ChatRPG v2**（arXiv:2502.19519，Narrator + Archivist 裁判范式——叙事与状态归档分离，结构化状态为唯一权威防吃书）。
 
 ## 2. 语言与运行时：TypeScript（Node LTS）
 
@@ -46,7 +46,7 @@
 
 ## 5. 身份与 prompt：身份牌层
 
-设计详见 design/identity-card.md。要点结论：
+要点结论（L0–L9 分层当前定义见 design/overview.md §5.3）：
 
 - **SillyTavern** 体系是该问题域最成熟参照：Tavern v2 角色卡规范、World Info 世界书、Prompt Manager 分层组装。
 - 业界缓存实践一致：静态内容置前、动态置尾、边界打断点；防 footgun（工具序漂移、时间戳/UUID 泄漏进前缀）。

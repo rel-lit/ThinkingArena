@@ -24,7 +24,7 @@ MVP 之后第一个扩展就是**锦标赛模式**（多 Build 并行跑同一�
 
 按 core-loop.md 的四层模型定位：
 
-- **Protagonist Agent**：主角。Agent 服务实例 + Build 身份卡（`identity_card_v1, kind=build`，见 design/identity-card.md）——本/硕/博院校专业 + 课题 + 派生技能标签与性格。
+- **Protagonist Agent**：主角。Agent 服务实例 + Build 身份卡（`identity_card_v1, kind=build`，设计要点见 design/overview.md §5.3/§7.5）——本/硕/博院校专业 + 课题 + 派生技能标签与性格。
 - **裁判**：不是单个角色，而是**组件组合**——Narrator 叙事组件（调 Agent 服务写情境与后果）+ Archivist 状态权威服务（维护结构化状态表、校验叙事不违背状态，防吃书）+ 骰子组件。
 - **Director（你）**：通过导演门 inject / whisper / edit_world 随时干预（见 architecture.md 导演门机制）。
 

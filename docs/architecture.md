@@ -1,6 +1,6 @@
 # 总体架构
 
-> 领域模型见 core-loop.md；选型依据见 research.md；身份牌专项设计见 design/identity-card.md。
+> 领域模型见 core-loop.md；选型依据见 research.md；prompt 分层（L0–L9）当前定义见 design/overview.md §5.3。
 
 ## 1. 总体形态：薄核心 + 外围工具域，契约衔接
 
@@ -59,7 +59,7 @@
 | **事件契约** | Script JSONL，树结构 `{ type, id, parent_id, timestamp, branch, payload }`；类型含发言/独白/骰点/导演干预/服务调用/缓存失效/成本（含原始 usage） |
 | **流程图配置** | 组件节点 + 控制边；条件是边的属性（声明式比较算子 DSL，非可执行表达式）；边以节点 id 为键、端口用名字不用魔法下标；join 显式声明等待哪些输入口 |
 | **元组件接口** | 统一调用面签名 + 事件发射校验入口；按可对外暴露形态设计，加 Adapter 即成 MCP |
-| **identity_card_v1** | 见 design/identity-card.md；校验器拒绝卡内出现模型字段（身份与 LLM 解耦的机械保证） |
+| **identity_card_v1** | 设计要点见 design/overview.md §5.3/§7.5，字段级契约留待 Schema 阶段定义；校验器拒绝卡内出现模型字段（身份与 LLM 解耦的机械保证） |
 
 **Scenario Bundle** = 一局的全部输入（目录，进 git）：流程图配置 + 游戏 YAML（规则参数 / LLM 绑定）+ `identity_cards/` + 世界书 + 种子事件。
 
@@ -84,7 +84,7 @@
 
 ### 4.3 Prompt 分层与缓存（成本硬约束）
 
-- 分层与断点规划的权威定义见 design/identity-card.md（L0–L9）。架构侧约束：
+- 分层与断点规划的当前定义见 design/overview.md §5.3（L0–L9）。架构侧约束：
   1. L0–L3 静态前缀**逐字稳定**：共享层在前、身份层在后，同服务商跨 Agent 复用前缀缓存；渲染器为纯函数（字段顺序固定、无时间戳/UUID/回合计数、YAML 序列化器固定），输出 SHA256 逐回合落 Script 验证逐字稳定；改写静态前缀记 `cache_invalidation` 事件。
   2. 长记忆压缩为稳定摘要段保持在静态区（L5），压缩检查点自包含，重建上下文不必回放全量历史。
   3. 服务商原生缓存：DeepSeek/Kimi/OpenAI 自动缓存零代码收益；Anthropic 显式断点（AI SDK `providerOptions.anthropic.cacheControl`）；豆包短局只用隐式缓存。批量阶段同服务商并发最大化前缀复用。
