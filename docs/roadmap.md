@@ -4,9 +4,9 @@
 
 ## Phase 0 — 精读参考书 + 契约初稿（2~3 天）
 
-- 精读 pi 的 packages/agent（agent-loop / types / jsonl-storage / agent-harness 文档），吸收 AgentTool 契约、JSONL 树落盘、两段式上下文投影、turn 快照/保存点、steering/follow-up 队列（吸收点清单见 research.md 第 1 节）。
+- 精读 pi 的 packages/agent（agent-loop / types / jsonl-storage / agent-harness 文档），吸收 AgentTool 契约、JSONL 树落盘、两段式上下文投影、turn 快照/保存点、steering/follow-up 队列（吸收点清单见 used-reference/research.md 第 1 节）。
 - 精读 Masquerade 源码（engine / orchestrator / agent / script），产出 `docs/masquerade-walkthrough.md`：回合怎么切、Script 时间轴怎么记、并发阶段怎么调度、TTS/Remotion 数据桥怎么接。细到可直接当实现规格书。
-- 四份契约初稿落 `schema/` 目录（Zod + JSON Schema 导出）：事件契约 v0.1、identity_card_v1（设计要点见 design/overview.md §5.3/§7.5，字段级契约在本阶段定义）、流程图配置 v0.1、元组件接口规范 v0.1。
+- 四份契约初稿落 `schema/` 目录（Zod + JSON Schema 导出）：事件契约 v0.1、identity_card_v1（设计要点见 used-reference/design/overview.md §5.3/§7.5，字段级契约在本阶段定义）、流程图配置 v0.1、元组件接口规范 v0.1。
 - **产出**：导读笔记 + `schema/` 目录（契约即代码）。
 
 ## Phase 1 — 薄核心 MVP（1~2 周）
@@ -55,3 +55,4 @@
 | 裁判 LLM 吃书 | 状态权威为唯一事实；骰子承担数值随机性 |
 | 导演注入使角色出戏 | whisper 走私有上下文 + 显著性标签；inject 仅用于环境事件 |
 | AI 生成组件质量参差 | 元组件层限定 API 面；组件入库前过契约测试 |
+| pi 演进（pi-orchestrator 多 Agent 实验包，2026-05 起） | 定期复审其成熟度；成熟前坚持自研编排层（roadmap 检查点） |

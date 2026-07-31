@@ -1,6 +1,6 @@
 # 领域模型
 
-> 全项目最上层文档：系统里有什么、怎么运转。实现见 architecture.md，选型依据见 research.md。
+> 全项目最上层文档：系统里有什么、怎么运转。运转实现的权威定义见 design/runtime-architecture.md；调研素材（非权威）在 used-reference/。
 
 ## 系统是什么
 

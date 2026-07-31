@@ -403,7 +403,7 @@ interface Event {
 | `monologue` | 内心独白 |
 | `dice` | 骰点结果 |
 | `director_intervention` | 导演干预 |
-| `service_call` | 服务调用（TTS/生图/视频） |
+| `service_call` | 服务调用（TTS/生图/视频）——归属局外 manifest，不写局内 Script（runtime-architecture.md D14 裁决） |
 | `cache_invalidation` | 缓存失效 |
 | `cost` | 成本记录（含原始 usage） |
 | `agent_to_agent` | Agent 间通信 |
@@ -759,8 +759,8 @@ class AgentService {
   createAgent(id: string, identityCard: IdentityCard, modelBinding: ModelBinding): AgentInstance;
   destroyAgent(id: string): void;
   getAgent(id: string): AgentInstance;
-  broadcast(event: AgentEvent): void;
-  sendTo(targetId: string, event: AgentEvent): void;
+  // 注：权威接口以 design/runtime-architecture.md §4.1 为准——
+  // 无 broadcast/sendTo（D2：Agent 间通信由组件编排，不经服务层直发）
 }
 
 class AgentInstance {
@@ -789,12 +789,10 @@ interface Blackboard {
   get(key: string): any;
   set(key: string, value: any): void;
 
-  // 事件发布（广播/定向）
-  emit(event: BlackboardEvent): void;
-  subscribe(filter: EventFilter, handler: EventHandler): void;
-
   // 快照（用于分支条件求值）
   snapshot(): BlackboardSnapshot;
+  // 注：权威接口以 design/runtime-architecture.md §4.2 为准——
+  // emit/subscribe 已删除（D10：门经 await、CLI 经 tail、记忆经 F17 推送）
 }
 ```
 

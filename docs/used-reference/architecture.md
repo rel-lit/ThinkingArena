@@ -85,7 +85,7 @@
 ### 4.3 Prompt 分层与缓存（成本硬约束）
 
 - 分层与断点规划的当前定义见 design/overview.md §5.3（L0–L9）。架构侧约束：
-  1. L0–L3 静态前缀**逐字稳定**：共享层在前、身份层在后，同服务商跨 Agent 复用前缀缓存；渲染器为纯函数（字段顺序固定、无时间戳/UUID/回合计数、YAML 序列化器固定），输出 SHA256 逐回合落 Script 验证逐字稳定；改写静态前缀记 `cache_invalidation` 事件。
+  1. L0–L5 静态前缀**逐字稳定**（与 design/overview.md §5.3 分层表一致：L0–L5 标为静态前缀，L6–L9 为动态段）：共享层在前、身份层在后，同服务商跨 Agent 复用前缀缓存；渲染器为纯函数（字段顺序固定、无时间戳/UUID/回合计数、YAML 序列化器固定），输出 SHA256 逐回合落 Script 验证逐字稳定；改写静态前缀记 `cache_invalidation` 事件。
   2. 长记忆压缩为稳定摘要段保持在静态区（L5），压缩检查点自包含，重建上下文不必回放全量历史。
   3. 服务商原生缓存：DeepSeek/Kimi/OpenAI 自动缓存零代码收益；Anthropic 显式断点（AI SDK `providerOptions.anthropic.cacheControl`）；豆包短局只用隐式缓存。批量阶段同服务商并发最大化前缀复用。
 - **成本双轨台账**：自维护 YAML 价格表计算值 + 原始 usage（prompt/completion/cached tokens）重算值同时落 Script，互相对账。
@@ -120,7 +120,7 @@ FlowRunner.run(bundle):
 
 - **动态就绪调度**（执行栈 + join 等待表），无需静态拓扑排序；**回边即循环**，无循环原语；分支语义 = 往哪个输出端口放数据，引擎不理解 if（条件是边的属性，遍历瞬间求值）。
 - 多 Agent 并发 = 并行分支 + `Promise.all`；导演门等待用 AbortController 保证可取消。
-- 重跑判定（n8n 参照）：参数变/图变 → 下游 stale；循环内任意节点 stale → 循环首节点 stale。
+- 重跑语义以 design/runtime-architecture.md 为准（D21 版本域 fork + §2.4）：跨版本不复用任何执行结果；同版本内从任意事件分叉重跑。（此处原有的 n8n 式 stale 传播判定已被否决，见 runtime-architecture.md §2.4 被否决方案。）
 - 若未来出现"任意点暂停并跨进程恢复"的需求，届时给 reduce/事件层加适配，现在不做。
 
 ## 5. 外围域
