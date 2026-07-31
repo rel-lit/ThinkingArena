@@ -1,0 +1,99 @@
+{
+  "name": "isekai-survival",
+  "version": "1.0.0",
+  "entry": "narrate_scene",
+  "nodes": [
+    {
+      "id": "narrate_scene",
+      "type": "narrator",
+      "version": "1.0.0",
+      "params": { "agent_id": "narrator", "brief": "基于世界设定与状态表生成当前局面，须含一个明确的压力源" },
+      "on_error": "stop"
+    },
+    {
+      "id": "protagonist_decide",
+      "type": "agent_turn",
+      "version": "1.0.0",
+      "params": { "agent_id": "protagonist", "brief": "输出内心独白 + 行动声明（可声明使用技能/物资）" },
+      "on_error": "stop"
+    },
+    {
+      "id": "dice_check",
+      "type": "dice",
+      "version": "1.0.0",
+      "params": { "expression": "1d20", "grade_table": "rules.grade_thresholds" },
+      "on_error": "stop"
+    },
+    {
+      "id": "settle",
+      "type": "archivist",
+      "version": "1.0.0",
+      "params": { "agent_id": "archivist", "state_prefix": "state", "brief": "按骰级写叙事并更新状态表，须给出数值依据" },
+      "on_error": "stop"
+    },
+    {
+      "id": "sanity_check",
+      "type": "archivist",
+      "version": "1.0.0",
+      "params": { "agent_id": "archivist", "state_prefix": "state", "brief": "理智检查：连续高压无锚点支撑加速 SAN 流失" },
+      "on_error": "stop"
+    },
+    {
+      "id": "director_gate",
+      "type": "director_gate",
+      "version": "1.0.0",
+      "params": {
+        "targets": ["protagonist"],
+        "accepts": ["whisper", "inject", "edit_world", "agent_broadcast"],
+        "timeout": { "policy": "wait_forever" }
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "world_switch",
+      "type": "archivist",
+      "version": "1.0.0",
+      "params": { "agent_id": "archivist", "state_prefix": "state", "brief": "世界切换：做一次穿越冲击判定；全部世界序列完成则退出回合循环" },
+      "on_error": "stop"
+    },
+    {
+      "id": "ending",
+      "type": "milestone",
+      "version": "1.0.0",
+      "params": { "kind": "run_ending" },
+      "on_error": "stop"
+    }
+  ],
+  "edges": [
+    { "from": "narrate_scene", "from_port": "out", "to": "protagonist_decide", "to_port": "in" },
+    { "from": "protagonist_decide", "from_port": "out", "to": "dice_check", "to_port": "in" },
+    { "from": "dice_check", "from_port": "out", "to": "settle", "to_port": "in" },
+    {
+      "id": "e_sanity_trigger",
+      "from": "settle",
+      "from_port": "out",
+      "to": "sanity_check",
+      "to_port": "in",
+      "condition": {
+        "op": "or",
+        "args": [
+          { "op": "gte", "left": { "ref": "state.protagonist.san_delta" }, "right": 10 },
+          { "op": "eq", "left": { "ref": "state.world.cognitive_shock" }, "right": true }
+        ]
+      },
+      "order": 0
+    },
+    { "from": "settle", "from_port": "out", "to": "director_gate", "to_port": "in", "order": 1 },
+    { "from": "sanity_check", "from_port": "out", "to": "director_gate", "to_port": "in" },
+    {
+      "id": "e_run_finished",
+      "from": "world_switch",
+      "from_port": "out",
+      "to": "ending",
+      "to_port": "in",
+      "condition": { "op": "eq", "left": { "ref": "state.world.sequence_finished" }, "right": true },
+      "order": 0
+    },
+    { "from": "world_switch", "from_port": "out", "to": "narrate_scene", "to_port": "in", "order": 1 }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "rules": {
+    "initial_state": {
+      "protagonist": {
+        "hp": 100,
+        "san": 100,
+        "skills": [
+          { "name": "野外生存", "level": 2, "source": "本科-中国地质大学(武汉)-地质学" },
+          { "name": "医疗处置", "level": 2, "source": "硕士-北京协和医学院-急诊医学" },
+          { "name": "锚点构建", "level": 2, "source": "博士-中国科学院心理研究所-应用心理学" }
+        ],
+        "inventory": [],
+        "mental_anchors": []
+      },
+      "world": { "id": "ashen_wastes", "day": 1, "env_tags": ["灰烬荒原", "极寒"], "active_threats": [] },
+      "timeline": []
+    },
+    "world_sequence": ["ashen_wastes", "cyber_hive", "arcane_court"],
+    "grade_thresholds": [
+      { "grade": "大成功", "min": 20 },
+      { "grade": "成功", "min": 15 },
+      { "grade": "部分成功", "min": 10 },
+      { "grade": "失败", "min": 5 },
+      { "grade": "大失败", "min": -999 }
+    ],
+    "stay_dice": "1d4+2",
+    "san_check_threshold": 10
+  },
+  "agents": [
+    {
+      "id": "protagonist",
+      "identity_card": "build-a.yaml",
+      "model": {
+        "model": "kimi-k3",
+        "tier": "flagship",
+        "fallback": ["claude-opus-4-8", "gpt-5.6-sol"],
+        "params": { "temperature": 0.8 }
+      },
+      "memory_ref": null
+    },
+    {
+      "id": "narrator",
+      "identity_card": "narrator.yaml",
+      "model": {
+        "model": "kimi-k3",
+        "tier": "flagship",
+        "fallback": ["claude-opus-4-8"],
+        "params": { "temperature": 0.9 }
+      },
+      "memory_ref": null
+    },
+    {
+      "id": "archivist",
+      "identity_card": "archivist.yaml",
+      "model": {
+        "model": "kimi-k2.7-code",
+        "tier": "standard",
+        "fallback": ["claude-sonnet-5"],
+        "params": { "temperature": 0.2 }
+      },
+      "memory_ref": null
+    }
+  ],
+  "cost_budget": { "max_total": 50, "currency": "CNY" },
+  "iteration_limit": 8,
+  "snapshot": { "every_node_boundaries": 10, "min_events": 500 }
+}
