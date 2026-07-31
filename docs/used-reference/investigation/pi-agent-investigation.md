@@ -174,6 +174,8 @@ class Agent {
 
 #### SessionManager：JSONL 树形持久化
 
+> **勘误（2026-07-31）**：本节描述的 `uuid`/`parentUuid` 完整 UUID 方案为 pi 会话格式 v1 时代写法；当前 v3 实际为字段名 `id`/`parentId`、条目 id 为 8 位 hex 短随机 + 碰撞检查（源码 commit `2fd3868` 实测）。详见 `deep-dive-event-log.md` 问题 1。
+
 会话存储为 JSONL 文件，树结构（`id` + `parentId`）：
 
 ```json
