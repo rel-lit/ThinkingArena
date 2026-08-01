@@ -34,6 +34,7 @@ import { createFlowRunner, type MutableEnvelopeSource } from '../orchestrator/fl
 import type { ComponentRegistry, DirectorPump, FlowRunner } from '../orchestrator/types.ts';
 import { createMockExecutor, loadMockScript } from './mock-llm.ts';
 import { createAiSdkExecutor } from '../services/ai-sdk-executor.ts';
+import { loadDotEnv } from './env.ts';
 
 // ===== Bundle 目录加载 =====
 
@@ -161,6 +162,7 @@ export function buildMockPriceTable(bundle: ScenarioBundle): Record<string, unkn
 // ===== CLI 入口 =====
 
 async function main(argv: string[]): Promise<number> {
+  loadDotEnv(); // 先加载 .env（已有环境变量优先），再解析参数
   const { values } = parseArgs({
     args: argv,
     options: {

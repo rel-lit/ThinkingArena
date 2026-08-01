@@ -23,6 +23,7 @@
  */
 import { createLLMGateway, type LLMGatewayPricing, type PriceRates } from '../services/llm-gateway.ts';
 import { createAiSdkExecutor } from '../services/ai-sdk-executor.ts';
+import { loadDotEnv } from './env.ts';
 import type { NormalizedUsage } from '../schema/event.ts';
 import type { LLMGatewayErrorKind, Result } from '../schema/errors.ts';
 import type { LLMResponse, RouteDecision } from '../services/types.ts';
@@ -213,6 +214,7 @@ async function smokeProvider(sp: SmokeProvider, model: string): Promise<boolean>
 }
 
 async function main(): Promise<void> {
+  loadDotEnv(); // 先加载 .env（已有环境变量优先），再解析参数
   const args = parseArgs(process.argv.slice(2));
   let names = Object.keys(PROVIDERS);
   if (args.provider !== undefined) {
