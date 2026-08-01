@@ -105,11 +105,17 @@ export function createAiSdkExecutor(options: AiSdkExecutorOptions = {}): LlmExec
   const factories = new Map<string, ProviderFactory>();
   const builtin: Record<string, () => ProviderFactory> = {
     deepseek: () => {
-      const p = createDeepSeek(); // 读 DEEPSEEK_API_KEY
+      // 读 DEEPSEEK_API_KEY；可选 DEEPSEEK_BASE_URL 覆盖端点（代理/专线场景）
+      const baseURL = process.env.DEEPSEEK_BASE_URL;
+      const p = baseURL !== undefined && baseURL !== '' ? createDeepSeek({ baseURL }) : createDeepSeek();
       return (id) => p(id);
     },
     moonshotai: () => {
-      const p = createMoonshotAI(); // 读 MOONSHOT_API_KEY
+      // 读 MOONSHOT_API_KEY；可选 MOONSHOT_BASE_URL 覆盖端点。
+      // 注意：platform.moonshot.cn（国内）与 api.moonshot.ai（国际）是两套账号体系，key 不通用——
+      // 国内控制台申请的 key 必须设 MOONSHOT_BASE_URL=https://api.moonshot.cn/v1，否则 401。
+      const baseURL = process.env.MOONSHOT_BASE_URL;
+      const p = baseURL !== undefined && baseURL !== '' ? createMoonshotAI({ baseURL }) : createMoonshotAI();
       return (id) => p(id);
     },
   };

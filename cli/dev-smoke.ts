@@ -102,7 +102,7 @@ async function checkCache(gateway: LLMGatewayPricing, decision: RouteDecision): 
   // 长前缀（Kimi >256 tokens 才参与缓存；DeepSeek 按前缀单元匹配）：重复段落构造 >500 tokens
   const para = '推演世界设定：近未来东亚沿海城邦群，气候剧变后垂直农业塔林立，各城邦以数据配给制维系运转。';
   const longPrompt = `${para.repeat(30)}\n\n基于以上设定，给出一个人物名。`;
-  const req = { prompt: longPrompt, maxTokens: 32 };
+  const req = { prompt: longPrompt, maxTokens: 512 }; // 推理模型会先烧 reasoning tokens，32 必截断（deepseek-v4-flash 实测）
   const first = await callOnce(gateway, decision, req);
   if (!first.ok) return { name: 'cached_tokens', pass: false, detail: `第一次调用失败：${first.error}` };
   const second = await callOnce(gateway, decision, req);
