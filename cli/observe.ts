@@ -129,15 +129,17 @@ export function observeRun(runDir: string, tail?: number): string {
 }
 
 async function main(argv: string[]): Promise<number> {
-  const { values } = parseArgs({
+  const { values, positionals } = parseArgs({
     args: argv,
     options: { 'run-dir': { type: 'string' }, tail: { type: 'string' } },
+    allowPositionals: true, // 允许位置参数作 run-dir（node cli/observe.ts runs/xxx）
   });
-  if (values['run-dir'] === undefined) {
-    console.error('用法: node cli/observe.ts --run-dir <dir> [--tail <n>]');
+  const runDir = values['run-dir'] ?? positionals[0];
+  if (runDir === undefined) {
+    console.error('用法: node cli/observe.ts [--run-dir] <dir> [--tail <n>]');
     return 2;
   }
-  console.log(observeRun(values['run-dir'], values.tail !== undefined ? Number(values.tail) : undefined));
+  console.log(observeRun(runDir, values.tail !== undefined ? Number(values.tail) : undefined));
   return 0;
 }
 

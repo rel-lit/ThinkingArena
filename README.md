@@ -43,13 +43,15 @@ node cli/run.ts --bundle bundles/isekai-mvp --run-dir runs/first-real
 局会在导演门处暂停等你。另开一个终端：
 
 ```bash
-node cli/observe.ts runs/first-real      # 实时观察事件流
+node cli/observe.ts runs/first-real      # 实时观察事件流（只读文件，不调用 API、不产生费用）
 
 # 注入干预（whisper = 私有催眠，主角会以为那是自己的想法）
 echo '{"kind":"whisper","text":"你隐约记得菌林的低语在唤你的名字。","targets":["protagonist"],"mode":"steering"}' >> runs/first-real/director_inbox.jsonl
 ```
 
 投喂纪律：一次一条，等 `gate_input_received` 落盘再投下一条；被 `no_waiting_gate` 拒收则重投。
+
+> **费用边界**：只有 `cli/run.ts`（真实局）会调用 LLM 产生费用；`observe` / `replay` / `dev-smoke` 之外的查看操作都只读本地文件。名册当前全绑 deepseek-v4-flash（k3 备用），改 `bundles/isekai-mvp/game.yaml` 可换模型。
 
 ### 5. 看结果
 

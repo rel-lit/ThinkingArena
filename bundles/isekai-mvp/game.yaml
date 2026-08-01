@@ -36,7 +36,7 @@
     {
       "id": "protagonist",
       "identity_card": "build-a.yaml",
-      "model": { "model": "k3", "tier": "flagship", "fallback": ["deepseek-v4-flash"], "params": { "temperature": 0.8 } },
+      "model": { "model": "deepseek-v4-flash", "tier": "flagship", "fallback": ["k3"], "params": { "temperature": 0.8 } },
       "memory_ref": null
     },
     {
