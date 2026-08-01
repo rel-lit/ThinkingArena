@@ -30,13 +30,19 @@ function isRef(o: ConditionOperand): o is { ref: string } {
   return typeof o === 'object' && o !== null && 'ref' in o;
 }
 
-/** 操作数求值：字面量直返；ref 经 get 读取，键不存在（undefined）即配置错误（F14）。 */
+/** 缺键哨兵：ref 引用不存在时的操作数占位（运行时态键缺失 ≠ 配置错误，架构师裁决 2026-08-01）。 */
+const MISSING = Symbol('missing-ref');
+
+/** 操作数求值：字面量直返；ref 经 get 读取，键不存在（undefined）→ MISSING 哨兵（比较整体求值为 false，不再判配置错误）。 */
 function evalOperand(o: ConditionOperand, get: (key: string) => unknown): Result<unknown, string> {
   if (!isRef(o)) return { ok: true, value: o };
   const v = get(o.ref);
-  return v === undefined
-    ? { ok: false, error: `分支条件引用不存在的黑板键: ${o.ref}` }
-    : { ok: true, value: v };
+  return v === undefined ? { ok: true, value: MISSING } : { ok: true, value: v };
+}
+
+/** 缺键时的引用名（用于 system 事件归因）。 */
+function missingRefOf(o: ConditionOperand): string | null {
+  return isRef(o) ? o.ref : null;
 }
 
 /** 深比较规范化：对象按排序键 JSON，标量直返（条件字面量集不含数组/对象，ref 值可能为任意 JSON）。 */
@@ -45,13 +51,19 @@ function canonical(v: unknown): unknown {
   return JSON.stringify(v, Object.keys(v as object).sort());
 }
 
-/** 条件表达式求值（D7 封闭算子集，纯函数）。错误为配置错误说明（detail 文本）。 */
-export function evalCondition(expr: ConditionExpr, get: (key: string) => unknown): Result<boolean, string> {
+/** 条件表达式求值（D7 封闭算子集，纯函数）。错误为配置错误说明（detail 文本）。
+ *  运行时缺键：比较整体求值为 false 并经 onMissingRef 上报（裁决：LLM 产出的运行时态键缺席是常态，
+ *  不应判节点失败；算子非法/类型不可比仍是配置错误）。 */
+export function evalCondition(
+  expr: ConditionExpr,
+  get: (key: string) => unknown,
+  onMissingRef?: (ref: string) => void,
+): Result<boolean, string> {
   switch (expr.op) {
     case 'and':
     case 'or': {
       for (const a of expr.args) {
-        const r = evalCondition(a, get);
+        const r = evalCondition(a, get, onMissingRef);
         if (!r.ok) return r;
         if (expr.op === 'and' && !r.value) return { ok: true, value: false };
         if (expr.op === 'or' && r.value) return { ok: true, value: true };
@@ -59,7 +71,7 @@ export function evalCondition(expr: ConditionExpr, get: (key: string) => unknown
       return { ok: true, value: expr.op === 'and' };
     }
     case 'not': {
-      const r = evalCondition(expr.arg, get);
+      const r = evalCondition(expr.arg, get, onMissingRef);
       return r.ok ? { ok: true, value: !r.value } : r;
     }
     default: {
@@ -67,6 +79,10 @@ export function evalCondition(expr: ConditionExpr, get: (key: string) => unknown
       if (!l.ok) return l;
       const r = evalOperand(expr.right, get);
       if (!r.ok) return r;
+      if (l.value === MISSING || r.value === MISSING) {
+        onMissingRef?.(l.value === MISSING ? missingRefOf(expr.left)! : missingRefOf(expr.right)!);
+        return { ok: true, value: false };
+      }
       if (expr.op === 'eq') return { ok: true, value: canonical(l.value) === canonical(r.value) };
       if (expr.op === 'neq') return { ok: true, value: canonical(l.value) !== canonical(r.value) };
       if (typeof l.value !== 'number' || typeof r.value !== 'number') {
@@ -105,6 +121,7 @@ export function decideOutEdge(
   nodeId: string,
   edges: readonly FlowEdge[],
   get: (key: string) => unknown,
+  onMissingRef?: (ref: string) => void,
 ): Result<OutEdgeDecision, string> {
   const outs = edges
     .map((e, i) => ({ e, i }))
@@ -113,7 +130,7 @@ export function decideOutEdge(
   const decisions: BranchDecisionPayload[] = [];
   for (const { e } of outs) {
     if (!e.condition) return { ok: true, value: { decisions, next: e.to } };
-    const r = evalCondition(e.condition, get);
+    const r = evalCondition(e.condition, get, onMissingRef);
     if (!r.ok) return { ok: false, error: r.error };
     const snapshot: Record<string, unknown> = {};
     for (const key of collectRefs(e.condition)) snapshot[key] = get(key) ?? null;

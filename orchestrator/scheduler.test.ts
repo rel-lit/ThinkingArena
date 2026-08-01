@@ -32,11 +32,17 @@ describe('evalCondition（D7）', () => {
     assert.deepEqual(evalCondition(expr, bb({ a: 0, b: true })), { ok: true, value: false });
   });
 
-  test('配置错误：引用不存在的键 / 非数字比较（F14）', () => {
-    const r1 = evalCondition({ op: 'eq', left: { ref: 'ghost' }, right: 1 }, bb({}));
-    assert.ok(!r1.ok && r1.error.includes('ghost'));
-    const r2 = evalCondition({ op: 'gt', left: { ref: 'a' }, right: 1 }, bb({ a: 'str' }));
-    assert.ok(!r2.ok && r2.error.includes('数字'));
+  test('运行时缺键 → false + onMissingRef 上报；非数字比较仍为配置错误（D7 裁决）', () => {
+    const missing: string[] = [];
+    const cb = (ref: string) => missing.push(ref);
+    // 缺键：eq/gte 均求值为 false 且上报，不报错
+    const r1 = evalCondition({ op: 'eq', left: { ref: 'ghost' }, right: 1 }, bb({}), cb);
+    assert.ok(r1.ok && r1.value === false && missing.includes('ghost'));
+    const r2 = evalCondition({ op: 'gte', left: { ref: 'ghost2' }, right: 10 }, bb({}), cb);
+    assert.ok(r2.ok && r2.value === false && missing.includes('ghost2'));
+    // 类型不可比仍是配置错误
+    const r3 = evalCondition({ op: 'gt', left: { ref: 'a' }, right: 1 }, bb({ a: 'str' }));
+    assert.ok(!r3.ok && r3.error.includes('数字'));
   });
 
   test('collectRefs 收集引用键（branch_decision 快照子集）', () => {
@@ -85,11 +91,14 @@ describe('decideOutEdge（排他分支，首局语义）', () => {
     assert.equal(r.value.next, null);
   });
 
-  test('无出边 → next=null；求值失败 → 配置错误上报', () => {
+  test('无出边 → next=null；运行时缺键 → 条件 false 顺延（D7 裁决）', () => {
     const r1 = decideOutEdge('lonely', edges, bb({}));
     assert.ok(r1.ok && r1.value.next === null && r1.value.decisions.length === 0);
-    const r2 = decideOutEdge('s', edges, bb({}));
-    assert.ok(!r2.ok && r2.error.includes('hp'));
+    // hp 缺键：e1 条件按 false 处理并上报，顺延至无条件边 e2
+    const missing: string[] = [];
+    const r2 = decideOutEdge('s', edges, bb({}), (ref) => missing.push(ref));
+    assert.ok(r2.ok && r2.value.next === 't2' && missing.includes('hp'));
+    assert.equal(r2.value.decisions[0]?.result, false);
   });
 
   test('order 缺省按声明序稳定排序', () => {

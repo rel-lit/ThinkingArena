@@ -18,7 +18,7 @@
               "personality": "冷静、复盘癖、在极端环境下会不自觉地做田野笔记；压力下先建立仪式性小动作（整理标本袋）再决策。",
               "scenario": "连续被丢到迥异异世界的受试者。醒来时位于菌冠林海边缘的一处岩棚，身上只有毕业旅行时的背包。不知道传送机制，只知道必须活下去且不能疯掉。"
             },
-            "model": { "model": "kimi-k3", "tier": "flagship", "fallback": ["deepseek-v4"], "params": { "temperature": 0.8 } }
+            "model": { "model": "k3", "tier": "flagship", "fallback": ["deepseek-v4-flash"], "params": { "temperature": 0.8 } }
           },
           {
             "id": "referee",
@@ -28,7 +28,7 @@
               "description": "跑团裁判（GM）：情境呈现、行动裁决与后果结算的叙事声音。只按世界书、状态表与骰点裁决，数值变动必须给出依据，绝不偏袒任何 Build。",
               "personality": "冷静、克制、有纪实感的旁白腔；对「什么在起作用」保持观察者的好奇。"
             },
-            "model": { "model": "deepseek-v4", "tier": "standard", "fallback": ["kimi-k3"], "params": { "temperature": 0.2 } }
+            "model": { "model": "deepseek-v4-flash", "tier": "standard", "fallback": ["k3"], "params": { "temperature": 0.2 } }
           }
         ]
       },
@@ -78,7 +78,8 @@
         "grades": ["大成功", "成功", "部分成功", "失败", "大失败"],
         "dice_expression": "1d20",
         "modifier": 2,
-        "max_retries": 2
+        "max_retries": 2,
+        "state_contract": "state.hp（生理，0-100）、state.san（理智，0-100）、state.san_delta（本回合 SAN 变动绝对值，无变动为 0）、state.cognitive_shock（本回合是否遭遇认知冲击，布尔）、state.rounds（已完成回合数，上一回合值 +1）、protagonist.skills（技能标签数组）、protagonist.inventory（物资数组）、protagonist.mental_anchors（精神锚点数组）"
       },
       "on_error": "stop"
     },
@@ -102,7 +103,8 @@
         "referee_agent_id": "referee",
         "grades": ["守住", "动摇", "崩坏"],
         "dice_expression": "1d20",
-        "max_retries": 2
+        "max_retries": 2,
+        "state_contract": "state.hp、state.san、state.san_delta（本次检查引起的 SAN 变动绝对值）、state.cognitive_shock（布尔）、state.rounds、protagonist.mental_anchors（精神锚点数组，支撑 SAN 的关键机制）"
       },
       "on_error": "stop"
     },

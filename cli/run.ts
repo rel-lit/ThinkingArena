@@ -15,7 +15,7 @@
  * 用法：node cli/run.ts --bundle <dir> --run-dir <dir> [--mock-llm <script.json>] [--resume] [--poll-interval-ms <n>]
  * run 目录产物：script.jsonl（Script）/ manifest.json（D24）/ director_inbox.jsonl（导演通道，F1）/ memory/。
  */
-import { mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -141,7 +141,14 @@ export function assembleComposition(opts: CompositionOptions): Composition {
   };
 }
 
-/** mock 价格表：名册主模型 + fallback 候选全部入表（fallback 归因的前提，D13/D16）。 */
+/** 按模型 id 推断服务商标识（价格表 provider 键，executor 据此选 provider 工厂）。 */
+function inferProvider(model: string): string {
+  if (model.startsWith('deepseek')) return 'deepseek';
+  if (model.startsWith('k3') || model.startsWith('kimi') || model.startsWith('moonshot')) return 'moonshotai';
+  return 'mock'; // 未知前缀：mock 局不受影响；真实局会在 route 期暴露为 NO_FALLBACK_AVAILABLE
+}
+
+/** 价格表：名册主模型 + fallback 候选全部入表（fallback 归因的前提，D13/D16）。 */
 export function buildMockPriceTable(bundle: ScenarioBundle): Record<string, unknown> {
   const currency = bundle.game.cost_budget?.currency ?? 'CNY';
   const table: Record<string, unknown> = {};
@@ -149,10 +156,10 @@ export function buildMockPriceTable(bundle: ScenarioBundle): Record<string, unkn
     const chain = [a.model.model, ...(a.model.fallback ?? [])];
     for (const [i, m] of chain.entries()) {
       table[m] ??= {
-        provider: 'mock',
+        provider: inferProvider(m),
         tier: a.model.tier,
         fallback: chain.slice(i + 1),
-        price: { currency, input: 2, output: 8 }, // 每 1M tokens 单价（mock 费率，非真实报价）
+        price: { currency, input: 2, output: 8 }, // 每 1M tokens 单价（占位费率，非真实报价；真实价格表待建）
       };
     }
   }
@@ -178,6 +185,11 @@ async function main(argv: string[]): Promise<number> {
     return 2;
   }
   const bundle = loadBundle(values.bundle);
+  // 一文件一局（event-log 不变量）：非 resume 时 run 目录已有 Script 则拒开，避免 EVENT_SCHEMA_INVALID 谜面
+  if (!values.resume && existsSync(join(values['run-dir'], 'script.jsonl'))) {
+    console.error(`run 目录已存在 Script（一文件一局）。换一个 --run-dir，或加 --resume 恢复上一局。`);
+    return 2;
+  }
   // 执行器选择：--mock-llm 走脚本 mock（测试/彩排）；缺省走真 AI SDK 适配器（真实局，key 经环境变量，凭证纪律附录 A）。
   const executor = values['mock-llm'] !== undefined
     ? createMockExecutor(loadMockScript(values['mock-llm']))

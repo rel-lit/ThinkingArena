@@ -36,13 +36,13 @@
     {
       "id": "protagonist",
       "identity_card": "build-a.yaml",
-      "model": { "model": "kimi-k3", "tier": "flagship", "fallback": ["deepseek-v4"], "params": { "temperature": 0.8 } },
+      "model": { "model": "k3", "tier": "flagship", "fallback": ["deepseek-v4-flash"], "params": { "temperature": 0.8 } },
       "memory_ref": null
     },
     {
       "id": "referee",
       "identity_card": "referee.yaml",
-      "model": { "model": "deepseek-v4", "tier": "standard", "fallback": ["kimi-k3"], "params": { "temperature": 0.2 } },
+      "model": { "model": "deepseek-v4-flash", "tier": "standard", "fallback": ["k3"], "params": { "temperature": 0.2 } },
       "memory_ref": null
     }
   ],

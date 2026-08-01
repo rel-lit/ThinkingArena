@@ -150,10 +150,22 @@ export function createFlowRunner(deps: FlowRunnerDeps): FlowRunner {
     enterError('NODE_FAILED', node.id, detail); // stop（R5）
   }
 
-  /** 出边求值（D7）：落 branch_decision；求值失败 = 配置错误走 on_error（F14）。 */
+  /** 出边求值（D7）：落 branch_decision；运行时缺键 → false + system 告警（裁决，每键一局只记一次）；配置错误走 on_error（F14）。 */
+  const missingRefSeen = new Set<string>();
+  function reportMissingRef(exec: NodeExec) {
+    return (ref: string) => {
+      if (missingRefSeen.has(ref)) return;
+      missingRefSeen.add(ref);
+      append({
+        exec,
+        type: 'system',
+        payload: { code: 'condition_missing_key', message: `分支条件引用的黑板键不存在，按 false 处理: ${ref}`, severity: 'warning' },
+      });
+    };
+  }
   function resolveOutEdges(exec: NodeExec): void {
     const node = flow!.nodes.find((n) => n.id === exec.node_id)!;
-    const r = decideOutEdge(exec.node_id, flow!.edges, (k) => blackboard.get(k));
+    const r = decideOutEdge(exec.node_id, flow!.edges, (k) => blackboard.get(k), reportMissingRef(exec));
     if (!r.ok) {
       handleNodeFailure(exec, node, 'BUNDLE_INVALID', `分支条件求值失败: ${r.error}`, true);
       return;

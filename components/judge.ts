@@ -19,6 +19,7 @@ export const JudgeParamsSchema = z
     dice_expression: z.string().optional().describe('检定骰式（缺省 = 无骰判定，dice_event_id 落 null）'),
     modifier: z.number().optional().describe('检定修正（技能/物资等）'),
     max_retries: z.number().int().positive().optional().describe('裁决输出校验失败的重试上限（D17；缺省 2）'),
+    state_contract: z.string().optional().describe('状态契约说明（追加进裁判 prompt：每回合 updates 必含的状态键清单与含义；用于保证分支条件引用的运行时键稳定存在）'),
   })
   .describe('judge 节点参数');
 
@@ -89,7 +90,8 @@ export function createJudgeComponent(rng: () => number): Component {
         (diceTotal === null ? '本次判定无骰。\n' : `检定骰点：${diceTotal}。\n`) +
         `档级集合：${p.grades.join(' / ')}\n` +
         '回复格式：{"grade":"<档级之一>","rationale":"<数值依据>","updates":[{"key":"<黑板键>","value":<新值>,"reason":"<数值依据>"}]}\n' +
-        '无状态变更时 updates 为空数组；状态变动必须给出数值依据。';
+        '无状态变更时 updates 为空数组；状态变动必须给出数值依据。\n' +
+        (p.state_contract ? `状态契约（每回合 updates 必须包含以下全部键，无变动也给当前值）：\n${p.state_contract}\n` : '');
       let verdict: Verdict | null = null;
       for (let attempt = 0; attempt <= maxRetries && !verdict; attempt++) {
         if (ctx.signal.aborted) return { ok: false, error: 'ABORTED' };
