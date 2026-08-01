@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "配置驱动的多 LLM 模拟推演器（当前仅含 schema/ 契约层）",
+  "description": "配置驱动的多 LLM 模拟推演器（薄核心 MVP：schema 契约 + 服务/元组件/组件/编排/CLI 全层落地）",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test \"schema/**/*.test.ts\""
+    "test": "node --test \"schema/**/*.test.ts\" \"services/**/*.test.ts\" \"meta/**/*.test.ts\" \"components/**/*.test.ts\" \"orchestrator/**/*.test.ts\" \"tests/**/*.test.ts\""
   },
   "dependencies": {
     "zod": "^4.0.0"
