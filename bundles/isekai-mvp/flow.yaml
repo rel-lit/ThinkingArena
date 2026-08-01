@@ -1,0 +1,167 @@
+{
+  "name": "isekai-mvp-fungal-forest",
+  "version": "1.0.0",
+  "entry": "create_roles",
+  "nodes": [
+    {
+      "id": "create_roles",
+      "type": "role_create",
+      "version": "1.0.0",
+      "params": {
+        "agents": [
+          {
+            "id": "protagonist",
+            "identity_card": {
+              "version": "1.0",
+              "name": "Build A · 均衡生存流",
+              "description": "刚毕业的博士研究生。本科：中国地质大学（武汉）· 地质学（课题：野外地质填图）；硕士：北京协和医学院 · 急诊医学（课题：院前急救）；博士：中国科学院心理研究所 · 应用心理学（课题：极端环境心理韧性）。派生技能标签：野外生存 L2（本科-野外地质填图）、地质判读 L2（本科-野外地质填图）、医疗处置 L2（硕士-院前急救）、SAN 维持 L2（博士-极端环境心理韧性）、锚点构建 L2（博士-极端环境心理韧性）。身体硬朗但非战斗人员；习惯先观察样本再行动；对「为什么」有执念。",
+              "personality": "冷静、复盘癖、在极端环境下会不自觉地做田野笔记；压力下先建立仪式性小动作（整理标本袋）再决策。",
+              "scenario": "连续被丢到迥异异世界的受试者。醒来时位于菌冠林海边缘的一处岩棚，身上只有毕业旅行时的背包。不知道传送机制，只知道必须活下去且不能疯掉。"
+            },
+            "model": { "model": "kimi-k3", "tier": "flagship", "fallback": ["deepseek-v4"], "params": { "temperature": 0.8 } }
+          },
+          {
+            "id": "referee",
+            "identity_card": {
+              "version": "1.0",
+              "name": "裁判",
+              "description": "跑团裁判（GM）：情境呈现、行动裁决与后果结算的叙事声音。只按世界书、状态表与骰点裁决，数值变动必须给出依据，绝不偏袒任何 Build。",
+              "personality": "冷静、克制、有纪实感的旁白腔；对「什么在起作用」保持观察者的好奇。"
+            },
+            "model": { "model": "deepseek-v4", "tier": "standard", "fallback": ["kimi-k3"], "params": { "temperature": 0.2 } }
+          }
+        ]
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "present_scene",
+      "type": "narrative",
+      "version": "1.0.0",
+      "params": {
+        "agent_id": "referee",
+        "intent": "情境呈现：基于世界书（菌冠林海）与本回合状态表，生成当前局面叙事，须包含一个明确的压力源（威胁 / 资源 / 认知危害至少其一）。不要替主角做决定。",
+        "emit_monologue": false
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "director_gate",
+      "type": "director_gate",
+      "version": "1.0.0",
+      "params": {
+        "targets": ["protagonist"],
+        "accepts": ["whisper", "inject", "edit_world", "agent_broadcast"],
+        "timeout": { "policy": "wait_forever" }
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "protagonist_decide",
+      "type": "narrative",
+      "version": "1.0.0",
+      "params": {
+        "agent_id": "protagonist",
+        "intent": "主角决策：输出内心独白，然后给出本回合行动声明（可声明使用技能标签或物资；行动须有明确成败属性，供裁判检定）。",
+        "tools": ["bb_get"],
+        "max_tool_rounds": 2
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "judge_action",
+      "type": "judge",
+      "version": "1.0.0",
+      "params": {
+        "subject": "主角的本回合行动声明（技能标签提供修正）",
+        "referee_agent_id": "referee",
+        "grades": ["大成功", "成功", "部分成功", "失败", "大失败"],
+        "dice_expression": "1d20",
+        "modifier": 2,
+        "max_retries": 2
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "settle_consequences",
+      "type": "narrative",
+      "version": "1.0.0",
+      "params": {
+        "agent_id": "referee",
+        "intent": "后果结算：按裁判档级与状态表变动写后果叙事（HP/SAN/物资/锚点变动须与数值依据一致），并为下一回合埋一个钩子。",
+        "emit_monologue": false
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "sanity_check",
+      "type": "judge",
+      "version": "1.0.0",
+      "params": {
+        "subject": "理智检查：认知冲击下的心理韧性检定（精神锚点可提供支撑）",
+        "referee_agent_id": "referee",
+        "grades": ["守住", "动摇", "崩坏"],
+        "dice_expression": "1d20",
+        "max_retries": 2
+      },
+      "on_error": "stop"
+    },
+    {
+      "id": "destroy_protagonist",
+      "type": "role_destroy",
+      "version": "1.0.0",
+      "params": { "agent_id": "protagonist", "reason": "世界一切片结束，局末收尾" },
+      "on_error": "stop"
+    },
+    {
+      "id": "destroy_referee",
+      "type": "role_destroy",
+      "version": "1.0.0",
+      "params": { "agent_id": "referee", "reason": "世界一切片结束，局末收尾" },
+      "on_error": "stop"
+    }
+  ],
+  "edges": [
+    { "from": "create_roles", "from_port": "out", "to": "present_scene", "to_port": "in" },
+    { "from": "present_scene", "from_port": "out", "to": "director_gate", "to_port": "in" },
+    { "from": "director_gate", "from_port": "out", "to": "protagonist_decide", "to_port": "in" },
+    { "from": "protagonist_decide", "from_port": "out", "to": "judge_action", "to_port": "in" },
+    { "from": "judge_action", "from_port": "out", "to": "settle_consequences", "to_port": "in" },
+    {
+      "id": "e_sanity_trigger",
+      "from": "settle_consequences",
+      "from_port": "out",
+      "to": "sanity_check",
+      "to_port": "in",
+      "condition": {
+        "op": "or",
+        "args": [
+          { "op": "gte", "left": { "ref": "state.san_delta" }, "right": 10 },
+          { "op": "eq", "left": { "ref": "state.cognitive_shock" }, "right": true }
+        ]
+      },
+      "order": 0
+    },
+    {
+      "id": "e_slice_complete",
+      "from": "settle_consequences",
+      "from_port": "out",
+      "to": "destroy_protagonist",
+      "to_port": "in",
+      "condition": { "op": "gte", "left": { "ref": "state.rounds" }, "right": 3 },
+      "order": 1
+    },
+    { "id": "e_loop_back", "from": "settle_consequences", "from_port": "out", "to": "present_scene", "to_port": "in", "order": 2 },
+    {
+      "id": "e_sanity_exit",
+      "from": "sanity_check",
+      "from_port": "out",
+      "to": "destroy_protagonist",
+      "to_port": "in",
+      "condition": { "op": "gte", "left": { "ref": "state.rounds" }, "right": 3 },
+      "order": 0
+    },
+    { "id": "e_sanity_loop", "from": "sanity_check", "from_port": "out", "to": "present_scene", "to_port": "in", "order": 1 },
+    { "from": "destroy_protagonist", "from_port": "out", "to": "destroy_referee", "to_port": "in" }
+  ]
+}

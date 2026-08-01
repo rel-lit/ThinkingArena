@@ -11,6 +11,9 @@
     "test": "node --test \"schema/**/*.test.ts\" \"services/**/*.test.ts\" \"meta/**/*.test.ts\" \"components/**/*.test.ts\" \"orchestrator/**/*.test.ts\" \"tests/**/*.test.ts\""
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^3.0.19",
+    "@ai-sdk/moonshotai": "^3.0.23",
+    "ai": "^7.0.47",
     "zod": "^4.0.0"
   }
 }

@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "rules": {
+    "initial_state": {
+      "protagonist": {
+        "hp": 100,
+        "san": 100,
+        "skills": [
+          { "name": "野外生存", "level": 2, "source": "本科-中国地质大学(武汉)-地质学-野外地质填图" },
+          { "name": "地质判读", "level": 2, "source": "本科-中国地质大学(武汉)-地质学-野外地质填图" },
+          { "name": "医疗处置", "level": 2, "source": "硕士-北京协和医学院-急诊医学-院前急救" },
+          { "name": "SAN 维持", "level": 2, "source": "博士-中国科学院心理研究所-应用心理学-极端环境心理韧性" },
+          { "name": "锚点构建", "level": 2, "source": "博士-中国科学院心理研究所-应用心理学-极端环境心理韧性" }
+        ],
+        "inventory": [],
+        "mental_anchors": []
+      },
+      "world": { "id": "fungal_forest", "day": 1, "env_tags": ["原始森林", "致幻孢子", "无金属"], "active_threats": ["孢子瘴气", "毒虫群", "水源稀缺"] },
+      "timeline": []
+    },
+    "world_sequence": ["fungal_forest"],
+    "rounds_per_world": 3,
+    "grade_thresholds": [
+      { "grade": "大成功", "min": 20 },
+      { "grade": "成功", "min": 15 },
+      { "grade": "部分成功", "min": 10 },
+      { "grade": "失败", "min": 5 },
+      { "grade": "大失败", "min": -999 }
+    ],
+    "sanity_grades": ["守住", "动摇", "崩坏"],
+    "san_check": { "delta_threshold": 10, "cognitive_shock_key": "state.cognitive_shock" },
+    "loop_counter_key": "state.rounds",
+    "notes": "单世界切片：world_sequence 仅世界第一（菌冠林海），停留 3 回合固定（隐藏停留骰程留待三世界扩展）；切片结束即落定，无世界切换节点。"
+  },
+  "agents": [
+    {
+      "id": "protagonist",
+      "identity_card": "build-a.yaml",
+      "model": { "model": "kimi-k3", "tier": "flagship", "fallback": ["deepseek-v4"], "params": { "temperature": 0.8 } },
+      "memory_ref": null
+    },
+    {
+      "id": "referee",
+      "identity_card": "referee.yaml",
+      "model": { "model": "deepseek-v4", "tier": "standard", "fallback": ["kimi-k3"], "params": { "temperature": 0.2 } },
+      "memory_ref": null
+    }
+  ],
+  "cost_budget": { "max_total": 50, "currency": "CNY" },
+  "iteration_limit": 8,
+  "snapshot": { "every_node_boundaries": 10, "min_events": 500 }
+}

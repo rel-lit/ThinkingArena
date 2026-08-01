@@ -33,6 +33,7 @@ import { createDirectorPump, type DirectorPumpControl } from '../orchestrator/di
 import { createFlowRunner, type MutableEnvelopeSource } from '../orchestrator/flow-runner.ts';
 import type { ComponentRegistry, DirectorPump, FlowRunner } from '../orchestrator/types.ts';
 import { createMockExecutor, loadMockScript } from './mock-llm.ts';
+import { createAiSdkExecutor } from '../services/ai-sdk-executor.ts';
 
 // ===== Bundle 目录加载 =====
 
@@ -175,15 +176,21 @@ async function main(argv: string[]): Promise<number> {
     return 2;
   }
   const bundle = loadBundle(values.bundle);
-  const script = values['mock-llm'] !== undefined ? loadMockScript(values['mock-llm']) : [];
+  // 执行器选择：--mock-llm 走脚本 mock（测试/彩排）；缺省走真 AI SDK 适配器（真实局，key 经环境变量，凭证纪律附录 A）。
+  const executor = values['mock-llm'] !== undefined
+    ? createMockExecutor(loadMockScript(values['mock-llm']))
+    : createAiSdkExecutor();
   const c = assembleComposition({
     runDir: values['run-dir'],
     rngSeed: bundle.seeds.rng_seed,
     priceTable: buildMockPriceTable(bundle),
-    executor: createMockExecutor(script),
+    executor,
     pollIntervalMs: values['poll-interval-ms'] !== undefined ? Number(values['poll-interval-ms']) : undefined,
   });
   await c.pump.start();
+  // 保活句柄：wait_forever 门 = 纯 promise 挂起，泵轮询 timer 又是 unref 的——CLI 自持保活，
+  // 否则等导演投喂期间事件循环空转、进程静默退出（库侧保持 unref 纪律，事件循环生命周期归应用层）
+  const keepAlive = setInterval(() => {}, 60_000);
   try {
     const r = await c.runner.run(bundle, values.resume ? { resume: true } : undefined);
     if (!r.ok) {
@@ -193,6 +200,7 @@ async function main(argv: string[]): Promise<number> {
     console.log(JSON.stringify({ status: r.value.status, run_id: r.value.runId, manifest: join(c.runDir, 'manifest.json'), cost: r.value.manifest.cost }, null, 2));
     return 0;
   } finally {
+    clearInterval(keepAlive);
     c.pump.stop();
   }
 }
