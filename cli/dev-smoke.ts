@@ -141,14 +141,36 @@ async function checkStructured(gateway: LLMGatewayPricing, decision: RouteDecisi
     maxTokens: 512,
   });
   if (!r.ok) return { name: '结构化往返', pass: false, detail: `调用失败：${r.error}` };
-  const bad = checkObject(r.value.object, {
+  let bad = checkObject(r.value.object, {
     verdict: (v) => typeof v === 'string' && v.length > 0,
     score: (v) => Number.isInteger(v),
   });
+  if (bad !== null) {
+    // 端点不支持 response_format 时（如 Kimi Code api.kimi.com/coding），降级为 prompt 引导重试一次（D17 设计路径）
+    const retry = await callOnce(gateway, decision, {
+      prompt: '判定如下情境的紧张程度并给出一句评语：探险队在垂直农业塔顶层发现异常的信号源。只输出 JSON，格式 {"verdict":"一句评语","score":0-10 的整数}，不要输出其他任何内容。',
+      maxTokens: 512,
+    });
+    if (retry.ok) {
+      // 无 schema 模式下从文本中提取 JSON 再校验（与判定组件的 Zod 兜底同构）
+      const m = /```(?:json)?\s*([\s\S]*?)```|(\{[\s\S]*\})/.exec(retry.value.text);
+      const candidate = m?.[1] ?? m?.[2];
+      try {
+        const parsed: unknown = JSON.parse(candidate ?? retry.value.text);
+        bad = checkObject(parsed, {
+          verdict: (v) => typeof v === 'string' && v.length > 0,
+          score: (v) => Number.isInteger(v),
+        });
+        if (bad === null) {
+          return { name: '结构化往返', pass: true, detail: `端点无 json_schema，prompt 引导降级可用（D17 路径）${usageSummary(retry.value.usage, retry.value.rawUsage)}` };
+        }
+      } catch { /* 落入失败 */ }
+    }
+  }
   return {
     name: '结构化往返',
     pass: bad === null,
-    detail: bad === null ? `object 合规 ${usageSummary(r.value.usage, r.value.rawUsage)}` : `${bad}（DeepSeek 走 json_object 降级，需业务层 Zod 兜底）`,
+    detail: bad === null ? `object 合规 ${usageSummary(r.value.usage, r.value.rawUsage)}` : `${bad}（json_schema 与 prompt 降级均不可用）`,
   };
 }
 
